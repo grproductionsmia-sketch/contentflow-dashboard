@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContentFlow AI — GR Productions</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --card:#16161f; --border:#ffffff0f;
+  --accent:#7c5cfc; --accent2:#fc5c7d; --green:#2ecc71; --yellow:#f1c40f;
+  --red:#e74c3c; --text:#f0f0f8; --muted:#6b6b80;
+  --fh:'Syne',sans-serif; --fb:'DM Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh;display:flex;overflow:hidden;}
+.sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:24px 16px;gap:4px;flex-shrink:0;}
+.logo{font-family:var(--fh);font-size:20px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;padding:8px 12px 20px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.logo span{display:block;font-size:10px;font-weight:400;color:var(--muted);-webkit-text-fill-color:var(--muted);margin-top:2px;}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:none;background:none;color:var(--muted);font-family:var(--fb);font-size:14px;cursor:pointer;transition:all .2s;width:100%;}
+.nav-btn:hover{background:var(--card);color:var(--text);}
+.nav-btn.active{background:linear-gradient(135deg,#7c5cfc22,#fc5c7d22);color:var(--text);border:1px solid #7c5cfc44;}
+.badge{margin-left:auto;background:var(--accent2);color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;}
+.sidebar-footer{margin-top:auto;padding:12px;background:var(--card);border-radius:12px;border:1px solid var(--border);}
+.sf-name{font-weight:600;font-size:13px;} .sf-plan{font-size:10px;color:var(--muted);margin-top:2px;}
+.main{flex:1;overflow-y:auto;height:100vh;}
+.page{display:none;padding:32px;animation:fadeIn .3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-title{font-family:var(--fh);font-size:28px;font-weight:700;margin-bottom:4px;}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.stat-val{font-family:var(--fh);font-size:32px;font-weight:700;margin:8px 0 4px;}
+.stat-note{font-size:12px;color:var(--muted);}
+.posts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+.post-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:transform .2s,border-color .2s;}
+.post-card:hover{transform:translateY(-2px);border-color:#7c5cfc44;}
+.post-img{width:100%;aspect-ratio:1;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:32px;overflow:hidden;}
+.post-img img{width:100%;height:100%;object-fit:cover;}
+.post-body{padding:14px;}
+.post-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:20px;margin-bottom:8px;}
+.s-pending{background:#f1c40f22;color:var(--yellow);}
+.s-published{background:#2ecc7122;color:var(--green);}
+.s-processing{background:#7c5cfc22;color:var(--accent);}
+.s-rejected{background:#e74c3c22;color:var(--red);}
+.post-caption{font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.post-hashtags{font-size:11px;color:var(--accent);margin-top:6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.post-meta{font-size:11px;color:var(--muted);margin-top:8px;display:flex;justify-content:space-between;}
+.post-actions{display:flex;gap:6px;margin-top:12px;}
+.btn-sm{padding:6px 14px;border-radius:8px;border:none;font-size:12px;font-family:var(--fb);cursor:pointer;transition:all .2s;}
+.btn-approve{background:var(--green);color:#fff;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;}
+.form-full{grid-column:1/-1;}
+.flabel{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:block;}
+.finput,.fselect,.ftextarea{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--fb);font-size:14px;padding:12px 14px;transition:border-color .2s;outline:none;}
+.finput:focus,.fselect:focus,.ftextarea:focus{border-color:var(--accent);}
+.ftextarea{resize:vertical;min-height:100px;}
+.fselect option{background:var(--surface);}
+.ct-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.ct-opt{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;}
+.ct-opt:hover,.ct-opt.sel{border-color:var(--accent);background:#7c5cfc15;}
+.ct-icon{font-size:24px;margin-bottom:6px;}
+.ct-label{font-size:13px;font-weight:500;}
+.btn-gen{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:12px;padding:14px 32px;font-family:var(--fh);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;width:100%;margin-top:8px;}
+.btn-gen:hover{opacity:.9;transform:translateY(-1px);}
+.btn-gen:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ffffff44;border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress-steps{display:flex;flex-direction:column;gap:8px;margin:16px 0;}
+.step{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-radius:10px;font-size:13px;border:1px solid var(--border);transition:all .3s;}
+.step.active{border-color:var(--accent);background:#7c5cfc15;}
+.step.done{border-color:#2ecc7155;background:#2ecc7111;}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.step.active .step-dot{background:var(--accent);box-shadow:0 0 8px var(--accent);}
+.step.done .step-dot{background:var(--green);}
+.modal-overlay{position:fixed;inset:0;background:#000000cc;z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:28px;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.modal-title{font-family:var(--fh);font-size:20px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.modal-close:hover{background:var(--card);}
+.modal-img{width:100%;border-radius:12px;max-height:380px;object-fit:cover;margin-bottom:20px;display:block;}
+.caption-edit{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--fb);font-size:13px;padding:12px;resize:vertical;min-height:80px;outline:none;margin-bottom:12px;}
+.caption-edit:focus{border-color:var(--accent);}
+.modal-actions{display:flex;gap:10px;margin-top:8px;}
+.btn-pub{flex:1;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:13px;font-family:var(--fh);font-size:15px;font-weight:700;cursor:pointer;}
+.btn-pub:hover{opacity:.9;}
+.btn-pub:disabled{opacity:.5;cursor:not-allowed;}
+.btn-rej{padding:13px 20px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-family:var(--fb);}
+.config-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;}
+.config-title{font-family:var(--fh);font-size:15px;font-weight:700;margin-bottom:16px;}
+.config-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.btn-save{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;padding:12px 28px;font-family:var(--fh);font-size:14px;font-weight:700;cursor:pointer;}
+.toast-container{position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;min-width:260px;animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;}
+.toast.ok{border-color:#2ecc7155;} .toast.err{border-color:#e74c3c55;}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.5;}
+::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">ContentFlow<span>GR Productions · v6</span></div>
+  <button class="nav-btn active" onclick="nav('dashboard')" id="nb-dashboard">
+    <span>📊</span> Dashboard <span class="badge" id="pending-badge" style="display:none">0</span>
+  </button>
+  <button class="nav-btn" onclick="nav('create')" id="nb-create"><span>✨</span> Crear Post</button>
+  <button class="nav-btn" onclick="nav('history')" id="nb-history"><span>📋</span> Historial</button>
+  <button class="nav-btn" onclick="nav('config')" id="nb-config"><span>⚙️</span> Config</button>
+  <div class="sidebar-footer">
+    <div class="sf-name">GR Productions</div>
+    <div class="sf-plan">Plan Creator · v6</div>
+  </div>
+</aside>
+
+<main class="main">
+  <!-- DASHBOARD -->
+  <div class="page active" id="pg-dashboard">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Bienvenido, GR Productions 👋</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-val" id="s-pending">0</div><div class="stat-note">Esperando aprobación</div></div>
+      <div class="stat-card"><div class="stat-label">Publicados hoy</div><div class="stat-val" id="s-today">0</div><div class="stat-note">Instagram + Facebook</div></div>
+      <div class="stat-card"><div class="stat-label">Total mes</div><div class="stat-val" id="s-month">0</div><div class="stat-note">Posts generados</div></div>
+      <div class="stat-card"><div class="stat-label">Estado IA</div><div class="stat-val" style="font-size:18px;margin-top:12px">🟢</div><div class="stat-note">Servicios activos</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-family:var(--fh);font-size:16px;font-weight:700">Posts recientes</div>
+      <button class="btn-sm btn-approve" onclick="nav('create')" style="padding:8px 16px;font-size:13px">+ Nuevo Post</button>
+    </div>
+    <div class="posts-grid" id="posts-grid">
+      <div class="empty"><div class="empty-icon">✨</div><div class="empty-text">No hay posts aún</div></div>
+    </div>
+  </div>
+
+  <!-- CREATE -->
+  <div class="page" id="pg-create">
+    <div class="page-title">Crear Post</div>
+    <div class="page-sub">Genera contenido con IA para Instagram y Facebook</div>
+    <div class="form-grid">
+      <div class="form-full">
+        <label class="flabel">💡 Tu idea</label>
+        <textarea class="ftextarea" id="f-idea" placeholder="Ej: mujer elegante promocionando perfume en Miami Beach con golden hour..."></textarea>
+      </div>
+      <div class="form-full">
+        <label class="flabel">📱 Tipo de contenido</label>
+        <div class="ct-grid">
+          <div class="ct-opt sel" onclick="selectCT('feed',this)"><div class="ct-icon">🖼️</div><div class="ct-label">Imagen Feed</div></div>
+          <div class="ct-opt" onclick="selectCT('reel',this)"><div class="ct-icon">🎬</div><div class="ct-label">Reel / Video</div></div>
+          <div class="ct-opt" onclick="selectCT('story',this)"><div class="ct-icon">📱</div><div class="ct-label">Story</div></div>
+        </div>
+      </div>
+      <div>
+        <label class="flabel">🎭 Tono</label>
+        <select class="fselect" id="f-tone">
+          <option value="inspirational">Inspiracional</option>
+          <option value="professional">Profesional</option>
+          <option value="casual">Casual</option>
+          <option value="luxury">Lujo / Premium</option>
+          <option value="funny">Divertido</option>
+          <option value="urgent">Urgente / CTA</option>
+        </select>
+      </div>
+      <div>
+        <label class="flabel">📡 Plataformas</label>
+        <select class="fselect" id="f-platforms">
+          <option value="instagram,facebook">Instagram + Facebook</option>
+          <option value="instagram">Solo Instagram</option>
+          <option value="facebook">Solo Facebook</option>
+        </select>
+      </div>
+      <div class="form-full">
+        <label class="flabel">📸 Foto de referencia (opcional)</label>
+        <div onclick="document.getElementById('photo-input').click()" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--card)" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div id="photo-placeholder" style="color:var(--muted);font-size:14px">🖼️ Click para subir imagen de referencia</div>
+          <img id="photo-preview" style="display:none;max-height:180px;border-radius:8px;max-width:100%">
+        </div>
+        <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+        <button id="photo-clear" onclick="clearPhoto()" style="display:none;margin-top:8px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--muted);cursor:pointer;font-size:12px">✕ Quitar foto</button>
+      </div>
+      <div class="form-full">
+        <button class="btn-gen" id="btn-gen" onclick="generate()">✨ Generar con IA</button>
+      </div>
+      <div class="form-full" id="progress-box" style="display:none">
+        <div class="progress-steps" id="progress-steps"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="page" id="pg-history">
+    <div class="page-title">Historial</div>
+    <div class="page-sub">Todos tus posts generados</div>
+    <div class="posts-grid" id="history-grid">
+      <div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No hay historial</div></div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="page" id="pg-config">
+    <div class="page-title">Configuración</div>
+    <div class="page-sub">Webhooks y preferencias</div>
+    <div class="config-section">
+      <div class="config-title">🔗 Webhooks n8n</div>
+      <div class="config-grid">
+        <div><label class="flabel">Submit URL</label><input class="finput" id="c-ws" type="url"></div>
+        <div><label class="flabel">Approve URL</label><input class="finput" id="c-wa" type="url"></div>
+      </div>
+    </div>
+    <div class="config-section">
+      <div class="config-title">👤 Cuenta</div>
+      <div class="config-grid">
+        <div><label class="flabel">Creator ID</label><input class="finput" id="c-cid" type="text"></div>
+        <div><label class="flabel">Plan</label>
+          <select class="fselect" id="c-plan">
+            <option value="free">Free</option>
+            <option value="starter">Starter</option>
+            <option value="creator" selected>Creator</option>
+            <option value="agency">Agency</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <button class="btn-save" onclick="saveCfg()">💾 Guardar</button>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">🖼️ Preview del Post</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-media"></div>
+    <div style="margin-bottom:8px"><label class="flabel">📸 Caption Instagram</label>
+      <textarea class="caption-edit" id="modal-ig"></textarea></div>
+    <div style="margin-bottom:8px"><label class="flabel">📘 Caption Facebook</label>
+      <textarea class="caption-edit" id="modal-fb"></textarea></div>
+    <div style="font-size:12px;color:var(--accent);margin-bottom:8px" id="modal-tags"></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px" id="modal-hook"></div>
+    <div class="modal-actions">
+      <button class="btn-pub" id="btn-pub" onclick="approvePost()">🚀 Aprobar y Publicar</button>
+      <button class="btn-rej" onclick="rejectPost()">✕ Rechazar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ── DEFAULT CONFIG ────────────────────────────────────────────
+const DEFAULTS = {
+  webhookSubmit:  'https://grproductionsmia.app.n8n.cloud/webhook/contentflow-submit',
+  webhookApprove: 'https://grproductionsmia.app.n8n.cloud/webhook/contentflow-approve',
+  creatorId:      'gr_productions_001',
+  plan:           'creator'
+};
+
+let cfg = {...DEFAULTS};
+let posts = [];
+let currentPost = null;
+let selectedCT = 'feed';
+let photoB64 = null;
+
+// ── INIT ──────────────────────────────────────────────────────
+window.onload = () => {
+  try { const s = localStorage.getItem('cf6_cfg'); if(s) cfg = {...DEFAULTS,...JSON.parse(s)}; } catch(e){}
+  try { const s = localStorage.getItem('cf6_posts'); if(s) posts = JSON.parse(s); } catch(e){}
+  loadCfg(); renderAll();
+};
+
+// ── NAV ───────────────────────────────────────────────────────
+function nav(p) {
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('pg-'+p).classList.add('active');
+  document.getElementById('nb-'+p).classList.add('active');
+  if(p==='history') renderHistory();
+}
+
+function selectCT(ct, el) {
+  document.querySelectorAll('.ct-opt').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedCT = ct;
+}
+
+// ── GENERATE ──────────────────────────────────────────────────
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 4*1024*1024){ toast('Imagen muy grande, máximo 4MB','err'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    photoB64 = ev.target.result.split(',')[1];
+    document.getElementById('photo-preview').src = ev.target.result;
+    document.getElementById('photo-preview').style.display = 'block';
+    document.getElementById('photo-placeholder').style.display = 'none';
+    document.getElementById('photo-clear').style.display = 'inline-block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto() {
+  photoB64 = null;
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('photo-placeholder').style.display = 'block';
+  document.getElementById('photo-clear').style.display = 'none';
+  document.getElementById('photo-input').value = '';
+}
+
+async function generate() {
+  const idea = document.getElementById('f-idea').value.trim();
+  if(!idea){ toast('Escribe tu idea primero','err'); return; }
+  if(!cfg.webhookSubmit){ toast('Configura el webhook primero','err'); nav('config'); return; }
+
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generando...';
+
+  const steps = ['🧠 Claude generando contenido...','🎨 FLUX generando imagen HD...','✅ Finalizando...'];
+  const pBox = document.getElementById('progress-box');
+  const pSteps = document.getElementById('progress-steps');
+  pBox.style.display = 'block';
+  pSteps.innerHTML = steps.map((s,i)=>`<div class="step ${i===0?'active':''}" id="ps-${i}"><div class="step-dot"></div>${s}</div>`).join('');
+  let si = 0;
+  const timer = setInterval(()=>{
+    document.getElementById('ps-'+si)?.classList.replace('active','done');
+    si++;
+    if(si < steps.length) document.getElementById('ps-'+si)?.classList.add('active');
+  }, 8000);
+
+  try {
+    const payload = {
+      idea,
+      tone:         document.getElementById('f-tone').value,
+      content_type: selectedCT,
+      reel_duration: 16,
+      platforms:    document.getElementById('f-platforms').value,
+      creator_id:   cfg.creatorId || 'gr_productions_001',
+      plan:         cfg.plan || 'creator'
+    };
+    if(photoB64) payload.photo_base64 = photoB64;
+
+    const res = await fetch(cfg.webhookSubmit, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    clearInterval(timer);
+    steps.forEach((_,i)=>{ document.getElementById('ps-'+i)?.classList.add('done'); document.getElementById('ps-'+i)?.classList.remove('active'); });
+
+    // Parse response
+    let data;
+    const text = await res.text();
+    console.log('RAW RESPONSE:', text);
+    try { data = JSON.parse(text); } catch(e) { throw new Error('Respuesta inválida del servidor: ' + text.substr(0,200)); }
+
+    console.log('PARSED DATA:', data);
+
+    // Handle both direct response and wrapped response
+    const d = data.json || data.body || data;
+
+    if(d.success || d.post_id || d.preview_url) {
+      const post = {
+        id:                d.post_id || '',
+        idea,
+        instagram_caption: d.instagram_caption || '',
+        facebook_caption:  d.facebook_caption  || '',
+        hashtags:          d.hashtags          || '',
+        hook:              d.hook              || '',
+        cta:               d.cta               || '',
+        media_url:         d.preview_url || d.generated_media_url || d.preview || '',
+        media_type:        d.media_type || 'image',
+        approval_token:    d.approval_token || '',
+        status:            'pending',
+        created_at:        new Date().toISOString()
+      };
+      console.log('POST SAVED:', post);
+      posts.unshift(post);
+      savePosts(); renderAll(); updateStats();
+      toast('✅ Post generado correctamente','ok');
+      pBox.style.display = 'none';
+      document.getElementById('f-idea').value = '';
+      clearPhoto();
+      setTimeout(()=>openModal(post), 400);
+    } else {
+      throw new Error(d.message || d.error || 'Sin datos en respuesta');
+    }
+  } catch(e) {
+    clearInterval(timer);
+    toast('❌ Error: '+e.message,'err');
+    pBox.style.display = 'none';
+    console.error('Generate error:', e);
+  }
+  btn.disabled = false;
+  btn.innerHTML = '✨ Generar con IA';
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function openModal(post) {
+  currentPost = post;
+  document.getElementById('modal-title').textContent = post.media_type==='video' ? '🎬 Preview del Reel' : '🖼️ Preview del Post';
+  const mm = document.getElementById('modal-media');
+  if(post.media_url) {
+    if(post.media_type==='video') {
+      mm.innerHTML = `<video controls style="width:100%;border-radius:12px;max-height:380px;margin-bottom:20px" src="${post.media_url}"></video>`;
+    } else {
+      mm.innerHTML = `<img class="modal-img" src="${post.media_url}" onerror="this.outerHTML='<div style=background:var(--card);border-radius:12px;height:200px;display:flex;align-items:center;justify-content:center;color:var(--muted);margin-bottom:20px;font-size:48px>🖼️</div>'">`;
+    }
+  } else {
+    mm.innerHTML = `<div style="background:var(--card);border-radius:12px;height:160px;display:flex;align-items:center;justify-content:center;color:var(--muted);margin-bottom:20px">Sin vista previa</div>`;
+  }
+  document.getElementById('modal-ig').value   = post.instagram_caption || '';
+  document.getElementById('modal-fb').value   = post.facebook_caption  || '';
+  document.getElementById('modal-tags').textContent = post.hashtags || '';
+  document.getElementById('modal-hook').textContent = post.hook ? `Hook: "${post.hook}"` : '';
+  const btn = document.getElementById('btn-pub');
+  btn.disabled = post.status==='published';
+  btn.textContent = post.status==='published' ? '✅ Ya publicado' : '🚀 Aprobar y Publicar';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  currentPost = null;
+}
+
+async function approvePost() {
+  if(!currentPost){ toast('No hay post seleccionado','err'); return; }
+  if(!cfg.webhookApprove){ toast('Configura el webhook de aprobación','err'); return; }
+  if(!currentPost.id){ toast('Error: post_id vacío — regenera el post','err'); return; }
+
+  const btn = document.getElementById('btn-pub');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Publicando...';
+
+  try {
+    const payload = {
+      post_id:           currentPost.id,
+      token:             currentPost.approval_token,
+      action:            'approve',
+      instagram_caption: document.getElementById('modal-ig').value,
+      facebook_caption:  document.getElementById('modal-fb').value,
+      hashtags:          currentPost.hashtags || '',
+      media_url:         currentPost.media_url || '',
+      media_type:        currentPost.media_type || 'image'
+    };
+    console.log('APPROVE PAYLOAD:', payload);
+
+    const res = await fetch(cfg.webhookApprove, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const text = await res.text();
+    console.log('APPROVE RESPONSE:', text);
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('Respuesta inválida: '+text.substr(0,100)); }
+    const d = data.json || data.body || data;
+    if(d.success) {
+      updateStatus(currentPost.id, 'published');
+      toast('🚀 Publicado en Instagram y Facebook!','ok');
+      closeModal();
+    } else {
+      throw new Error(d.message || d.error || JSON.stringify(d));
+    }
+  } catch(e) {
+    toast('❌ Error: '+e.message,'err');
+    console.error('Approve error:', e);
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Aprobar y Publicar';
+  }
+}
+
+async function rejectPost() {
+  if(!currentPost) return;
+  try {
+    await fetch(cfg.webhookApprove, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({post_id:currentPost.id, token:currentPost.approval_token, action:'reject'})
+    });
+  } catch(e){}
+  updateStatus(currentPost.id, 'rejected');
+  toast('Post rechazado','');
+  closeModal();
+}
+
+function updateStatus(id, status) {
+  const p = posts.find(x=>x.id===id);
+  if(p){ p.status=status; savePosts(); renderAll(); }
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderAll() {
+  const grid = document.getElementById('posts-grid');
+  if(posts.length===0){
+    grid.innerHTML='<div class="empty"><div class="empty-icon">✨</div><div class="empty-text">No hay posts aún</div></div>';
+  } else {
+    grid.innerHTML = posts.slice(0,12).map(postCard).join('');
+  }
+  updateStats();
+}
+
+function renderHistory() {
+  const grid = document.getElementById('history-grid');
+  grid.innerHTML = posts.length===0
+    ? '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No hay historial</div></div>'
+    : posts.map(postCard).join('');
+}
+
+function postCard(p) {
+  const sc = {pending:'s-pending',published:'s-published',processing:'s-processing',rejected:'s-rejected'}[p.status]||'s-processing';
+  const sl = {pending:'⏳ Pendiente',published:'✅ Publicado',processing:'⚡ Procesando',rejected:'✕ Rechazado'}[p.status]||'Procesando';
+  const img = p.media_url
+    ? `<div class="post-img"><img src="${p.media_url}" onerror="this.parentNode.innerHTML='🖼️'"></div>`
+    : `<div class="post-img">🖼️</div>`;
+  const actions = p.status==='pending'
+    ? `<div class="post-actions"><button class="btn-sm btn-approve" onclick="openModal(posts.find(x=>x.id==='${p.id}'))">Revisar</button></div>` : '';
+  return `<div class="post-card">${img}<div class="post-body">
+    <div class="post-status ${sc}">${sl}</div>
+    <div class="post-caption">${p.instagram_caption||p.idea||''}</div>
+    <div class="post-hashtags">${(p.hashtags||'').substring(0,60)}</div>
+    <div class="post-meta"><span>${timeAgo(p.created_at)}</span><span>${p.media_type==='video'?'🎬':'📸'}</span></div>
+    ${actions}</div></div>`;
+}
+
+function updateStats() {
+  const today = new Date().toDateString();
+  document.getElementById('s-pending').textContent = posts.filter(p=>p.status==='pending').length;
+  document.getElementById('s-today').textContent   = posts.filter(p=>p.status==='published'&&new Date(p.created_at).toDateString()===today).length;
+  document.getElementById('s-month').textContent   = posts.length;
+  const b = document.getElementById('pending-badge');
+  const n = posts.filter(p=>p.status==='pending').length;
+  b.textContent = n; b.style.display = n>0?'block':'none';
+}
+
+function timeAgo(iso) {
+  const m = Math.floor((Date.now()-new Date(iso).getTime())/60000);
+  if(m<1) return 'ahora'; if(m<60) return m+'m';
+  const h=Math.floor(m/60); if(h<24) return h+'h';
+  return Math.floor(h/24)+'d';
+}
+
+// ── CONFIG ────────────────────────────────────────────────────
+function loadCfg() {
+  document.getElementById('c-ws').value  = cfg.webhookSubmit  || '';
+  document.getElementById('c-wa').value  = cfg.webhookApprove || '';
+  document.getElementById('c-cid').value = cfg.creatorId      || 'gr_productions_001';
+  document.getElementById('c-plan').value= cfg.plan           || 'creator';
+}
+
+function saveCfg() {
+  cfg = {
+    webhookSubmit:  document.getElementById('c-ws').value.trim()  || DEFAULTS.webhookSubmit,
+    webhookApprove: document.getElementById('c-wa').value.trim()  || DEFAULTS.webhookApprove,
+    creatorId:      document.getElementById('c-cid').value.trim() || 'gr_productions_001',
+    plan:           document.getElementById('c-plan').value       || 'creator'
+  };
+  try { localStorage.setItem('cf6_cfg', JSON.stringify(cfg)); } catch(e){}
+  toast('✅ Configuración guardada','ok');
+}
+
+function savePosts() {
+  try { localStorage.setItem('cf6_posts', JSON.stringify(posts.slice(0,50))); } catch(e){}
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, type) {
+  const c = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = 'toast '+(type||'');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 4000);
+}
+
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+</script>
+</body>
+</html>
